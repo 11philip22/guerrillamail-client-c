@@ -1,0 +1,20 @@
+[package]
+name = "guerrillamail-client-c"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "C bindings for the guerrillamail-client Rust crate"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/guerrillamail-client-c"
+homepage = "https://www.guerrillamail.com/"
+repository = "https://github.com/11philip22/guerrillamail-client-c"
+keywords = ["ffi", "c", "email", "temp-mail", "guerrillamail"]
+categories = ["api-bindings", "web-programming"]
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+guerrillamail-client = "0.7.2"
+tokio = { version = "1", features = ["rt-multi-thread"] }
