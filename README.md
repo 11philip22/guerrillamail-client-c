@@ -52,6 +52,16 @@ See [`examples/demo.c`](examples/demo.c) for a minimal consumer. The expected fl
 3. Free returned strings/lists/details explicitly.
 4. On failure, inspect `gm_last_error_message()`.
 
+To build the demo with CMake on macOS, Linux, or Windows:
+
+```bash
+cmake -S examples -B build/demo
+cmake --build build/demo
+```
+
+For a release Rust library build, configure with
+`-DGUERRILLAMAIL_CLIENT_C_PROFILE=Release`.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
