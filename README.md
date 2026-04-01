@@ -45,18 +45,22 @@ cbindgen --config cbindgen.toml --crate guerrillamail-client-c --output include/
 
 ## Usage from C or C++
 
-See [`examples/demo.c`](examples/demo.c) for a minimal consumer. The expected flow is:
+See [`examples/demo.c`](examples/demo.c) for the full polling example that mirrors the Rust crate:
+a random alias is created, the inbox is polled until a message arrives (or times out), the first
+full message is fetched and printed, and the address is deleted during cleanup. The expected flow is:
 
 1. Create a builder or default client.
-2. Call blocking client functions.
-3. Free returned strings/lists/details explicitly.
-4. On failure, inspect `gm_last_error_message()`.
+2. Create a temporary email address.
+3. Poll the inbox with `gm_client_get_messages()`.
+4. Fetch the full message with `gm_client_fetch_email()`.
+5. Free returned strings/lists/details explicitly.
+6. On failure, inspect `gm_last_error_message()`.
 
 To build the demo with CMake on macOS, Linux, or Windows:
 
 ```bash
-cmake -S examples -B build/demo
-cmake --build build/demo
+cmake -S examples -B build/cmake-demo
+cmake --build build/cmake-demo
 ```
 
 For a release Rust library build, configure with
