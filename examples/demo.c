@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 
 #ifdef _WIN32
@@ -28,23 +27,6 @@ static void sleep_seconds(unsigned int seconds) {
 #else
     sleep(seconds);
 #endif
-}
-
-static void seed_random_once(void) {
-    static bool seeded = false;
-
-    if (!seeded) {
-        srand((unsigned int)time(NULL));
-        seeded = true;
-    }
-}
-
-static void make_random_alias(char *buffer, size_t buffer_len) {
-    unsigned int value;
-
-    seed_random_once();
-    value = ((unsigned int)rand()) % 100000U;
-    snprintf(buffer, buffer_len, "demo%05u", value);
 }
 
 static void print_full_message(const gm_email_details_t *details) {
@@ -76,7 +58,7 @@ int main(void) {
         return fail(status);
     }
 
-    make_random_alias(alias, sizeof(alias));
+    snprintf(alias, sizeof(alias), "demo%ld", (long)time(NULL));
     status = gm_client_create_email(client, alias, &email);
     if (status != GM_OK) {
         exit_code = fail(status);
