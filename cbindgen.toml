@@ -1,10 +1,8 @@
 language = "C"
 include_guard = "GUERRILLAMAIL_CLIENT_H"
-pragma_once = true
 cpp_compat = true
 documentation = true
 usize_is_size_t = true
 
 [parse]
 parse_deps = false
-
