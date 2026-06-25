@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/hero-banner.png" alt="hero pane" width="980">
-</p>
+<h1 align="center">guerrillamail-client-c</h1>
 
 <p align="center">
   <a href="https://crates.io/crates/guerrillamail-client-c"><img src="https://img.shields.io/crates/v/guerrillamail-client-c?style=for-the-badge&logo=rust&logoColor=white&color=D9653F" alt="Crates.io version"></a>
