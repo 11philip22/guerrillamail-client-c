@@ -36,7 +36,7 @@ pub enum gm_status_t {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct gm_string_t {
     pub ptr: *mut c_char,
     pub len: usize,
@@ -53,7 +53,7 @@ pub struct gm_message_t {
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct gm_message_list_t {
     pub ptr: *mut gm_message_t,
     pub len: usize,
@@ -69,24 +69,6 @@ pub struct gm_email_details_t {
     pub mail_timestamp: gm_string_t,
     pub attachment_count: u32,
     pub has_attachment_count: bool,
-}
-
-impl Default for gm_string_t {
-    fn default() -> Self {
-        Self {
-            ptr: ptr::null_mut(),
-            len: 0,
-        }
-    }
-}
-
-impl Default for gm_message_list_t {
-    fn default() -> Self {
-        Self {
-            ptr: ptr::null_mut(),
-            len: 0,
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
