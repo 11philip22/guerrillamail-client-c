@@ -54,15 +54,13 @@ full message is fetched and printed, and the address is deleted during cleanup. 
 5. Free returned strings/lists/details explicitly.
 6. On failure, inspect `gm_last_error_message()`.
 
-To build the demo with CMake on macOS, Linux, or Windows:
+On Linux, build the Rust library and compile the C demo with:
 
 ```bash
-cmake -S examples -B build/cmake-demo
-cmake --build build/cmake-demo
+cargo build
+mkdir -p build
+cc examples/demo.c -I include -L target/debug -lguerrillamail_client_c -Wl,-rpath,'$ORIGIN/../target/debug' -o build/demo
 ```
-
-For a release Rust library build, configure with
-`-DGUERRILLAMAIL_CLIENT_C_PROFILE=Release`.
 
 ## Contributing
 
