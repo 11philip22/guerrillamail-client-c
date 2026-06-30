@@ -74,12 +74,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/cool-feature`)
 5. Open a Pull Request
 
-## Support
-
-If this crate saves you time or helps your work, support is appreciated:
-
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/11philip22)
-
 ## License
 
 This project is licensed under the MIT License; see the [license](https://opensource.org/licenses/MIT) for details.
