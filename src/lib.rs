@@ -71,58 +71,7 @@ pub struct gm_email_details_t {
     pub has_attachment_count: bool,
 }
 
-#[derive(Clone, Debug)]
-struct BuilderState {
-    proxy: Option<String>,
-    danger_accept_invalid_certs: bool,
-    user_agent: Option<String>,
-    timeout_ms: u64,
-    #[cfg(test)]
-    ajax_url: Option<String>,
-    #[cfg(test)]
-    base_url: Option<String>,
-}
-
-impl Default for BuilderState {
-    fn default() -> Self {
-        Self {
-            proxy: None,
-            danger_accept_invalid_certs: true,
-            user_agent: None,
-            timeout_ms: 30_000,
-            #[cfg(test)]
-            ajax_url: None,
-            #[cfg(test)]
-            base_url: None,
-        }
-    }
-}
-
-impl BuilderState {
-    fn to_client_builder(&self) -> ClientBuilder {
-        let mut builder = Client::builder()
-            .danger_accept_invalid_certs(self.danger_accept_invalid_certs)
-            .timeout(Duration::from_millis(self.timeout_ms));
-
-        if let Some(proxy) = &self.proxy {
-            builder = builder.proxy(proxy.clone());
-        }
-        if let Some(user_agent) = &self.user_agent {
-            builder = builder.user_agent(user_agent.clone());
-        }
-        #[cfg(test)]
-        {
-            if let Some(ajax_url) = &self.ajax_url {
-                builder = builder.ajax_url(ajax_url.clone());
-            }
-            if let Some(base_url) = &self.base_url {
-                builder = builder.base_url(base_url.clone());
-            }
-        }
-        builder
-    }
-
-}
+type BuilderState = ClientBuilder;
 
 struct ClientHandle {
     runtime: Runtime,
@@ -142,6 +91,10 @@ where
             gm_status_t::GM_ERR_INTERNAL
         }
     }
+}
+
+fn ignore_panic<F: FnOnce()>(f: F) {
+    let _ = catch_unwind(AssertUnwindSafe(f));
 }
 
 fn set_last_error(message: impl Into<String>) {
@@ -284,7 +237,7 @@ fn free_gm_email_details_fields(details: &mut gm_email_details_t) {
 fn build_client_handle(state: &BuilderState) -> Result<*mut gm_client_t, gm_status_t> {
     let runtime = runtime_new()?;
     let client = runtime
-        .block_on(state.to_client_builder().build())
+        .block_on(state.clone().build())
         .map_err(status_from_error)?;
     let handle = ClientHandle { runtime, client };
     Ok(Box::into_raw(Box::new(handle)).cast::<gm_client_t>())
@@ -296,7 +249,7 @@ pub extern "C" fn gm_builder_new(out_builder: *mut *mut gm_builder_t) -> gm_stat
         if out_builder.is_null() {
             return Err(null_error("out_builder is null"));
         }
-        let builder = Box::new(BuilderState::default());
+        let builder = Box::new(Client::builder());
         unsafe {
             *out_builder = Box::into_raw(builder).cast::<gm_builder_t>();
         }
@@ -306,14 +259,14 @@ pub extern "C" fn gm_builder_new(out_builder: *mut *mut gm_builder_t) -> gm_stat
 
 #[unsafe(no_mangle)]
 pub extern "C" fn gm_builder_free(builder: *mut gm_builder_t) {
-    let _ = catch_unwind(AssertUnwindSafe(|| {
+    ignore_panic(|| {
         if builder.is_null() {
             return;
         }
         unsafe {
             let _ = Box::from_raw(builder.cast::<BuilderState>());
         }
-    }));
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -323,11 +276,8 @@ pub extern "C" fn gm_builder_set_proxy(
 ) -> gm_status_t {
     with_ffi_boundary(|| {
         let state = unsafe { builder_state_mut(builder)? };
-        if proxy.is_null() {
-            state.proxy = None;
-            return Ok(());
-        }
-        state.proxy = Some(unsafe { read_required_str(proxy, "proxy")? });
+        let proxy = unsafe { read_required_str(proxy, "proxy")? };
+        *state = state.clone().proxy(proxy);
         Ok(())
     })
 }
@@ -339,7 +289,7 @@ pub extern "C" fn gm_builder_set_danger_accept_invalid_certs(
 ) -> gm_status_t {
     with_ffi_boundary(|| {
         let state = unsafe { builder_state_mut(builder)? };
-        state.danger_accept_invalid_certs = value;
+        *state = state.clone().danger_accept_invalid_certs(value);
         Ok(())
     })
 }
@@ -351,7 +301,8 @@ pub extern "C" fn gm_builder_set_user_agent(
 ) -> gm_status_t {
     with_ffi_boundary(|| {
         let state = unsafe { builder_state_mut(builder)? };
-        state.user_agent = Some(unsafe { read_required_str(user_agent, "user_agent")? });
+        let user_agent = unsafe { read_required_str(user_agent, "user_agent")? };
+        *state = state.clone().user_agent(user_agent);
         Ok(())
     })
 }
@@ -366,7 +317,7 @@ pub extern "C" fn gm_builder_set_timeout_ms(
         if timeout_ms == 0 {
             return Err(invalid_arg("timeout_ms must be greater than zero"));
         }
-        state.timeout_ms = timeout_ms;
+        *state = state.clone().timeout(Duration::from_millis(timeout_ms));
         Ok(())
     })
 }
@@ -395,8 +346,7 @@ pub extern "C" fn gm_client_new_default(out_client: *mut *mut gm_client_t) -> gm
         if out_client.is_null() {
             return Err(null_error("out_client is null"));
         }
-        let state = BuilderState::default();
-        let client = build_client_handle(&state)?;
+        let client = build_client_handle(&Client::builder())?;
         unsafe {
             *out_client = client;
         }
@@ -406,14 +356,14 @@ pub extern "C" fn gm_client_new_default(out_client: *mut *mut gm_client_t) -> gm
 
 #[unsafe(no_mangle)]
 pub extern "C" fn gm_client_free(client: *mut gm_client_t) {
-    let _ = catch_unwind(AssertUnwindSafe(|| {
+    ignore_panic(|| {
         if client.is_null() {
             return;
         }
         unsafe {
             let _ = Box::from_raw(client.cast::<ClientHandle>());
         }
-    }));
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -521,18 +471,18 @@ pub extern "C" fn gm_client_delete_email(
 
 #[unsafe(no_mangle)]
 pub extern "C" fn gm_string_free(value: *mut gm_string_t) {
-    let _ = catch_unwind(AssertUnwindSafe(|| {
+    ignore_panic(|| {
         if value.is_null() {
             return;
         }
         let value = unsafe { &mut *value };
         free_gm_string(value);
-    }));
+    });
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn gm_message_list_free(messages: *mut gm_message_list_t) {
-    let _ = catch_unwind(AssertUnwindSafe(|| {
+    ignore_panic(|| {
         if messages.is_null() {
             return;
         }
@@ -546,18 +496,18 @@ pub extern "C" fn gm_message_list_free(messages: *mut gm_message_list_t) {
         }
         messages.ptr = ptr::null_mut();
         messages.len = 0;
-    }));
+    });
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn gm_email_details_free(details: *mut gm_email_details_t) {
-    let _ = catch_unwind(AssertUnwindSafe(|| {
+    ignore_panic(|| {
         if details.is_null() {
             return;
         }
         let mut details = unsafe { Box::from_raw(details) };
         free_gm_email_details_fields(&mut details);
-    }));
+    });
 }
 
 #[unsafe(no_mangle)]
@@ -605,6 +555,17 @@ mod tests {
             .to_str()
             .expect("utf8 error");
         assert!(error.contains("timeout_ms"));
+
+        gm_builder_free(builder);
+    }
+
+    #[test]
+    fn gm_builder_set_proxy_rejects_null() {
+        let mut builder = ptr::null_mut();
+        assert_eq!(gm_builder_new(&mut builder), gm_status_t::GM_OK);
+
+        let status = gm_builder_set_proxy(builder, ptr::null());
+        assert_eq!(status, gm_status_t::GM_ERR_NULL);
 
         gm_builder_free(builder);
     }
